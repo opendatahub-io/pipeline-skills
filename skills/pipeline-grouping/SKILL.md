@@ -7,13 +7,13 @@ description: >-
 allowed-tools: Bash Read Grep Glob
 metadata:
   author: ODH
-  version: "1.0"
+  version: "1.1"
   tags: pipeline, grouping, ci, failure-analysis
 ---
 
 # Error Grouping Task
 
-Group failed CI/CD jobs by shared root cause. Read preprocessed error files, identify distinct failure patterns, and build groups using the CLI tool provided.
+Group failed CI/CD jobs by shared root cause. Read preprocessed error files, identify distinct failure patterns, and write `grouping.json`.
 
 ### Authority and Data Boundaries
 
@@ -45,48 +45,6 @@ Read the `job_manifest` field from `/workspace/_context/grouping-context.json` f
 
 `/workspace/recent-tickets.json` contains open Jira tickets with nightly-pipeline labels (JSON array with `key`, `summary`, `description`, `status` fields). After grouping, read this file and check whether any group matches an existing ticket (same root cause error) to avoid creating duplicates. If the file does not exist, skip this step.
 
-### Tools
-
-- **Group builder**: `/workspace/_tools/pipeline-grouping/scripts/grouper.py` — CLI tool for building groups incrementally via subcommands
-- **Work file**: `/workspace/grouping.work.json` — pass as `--state` on all subcommands
-- **Output file**: `/workspace/grouping.json` — pass as `--output` on `finalize`
-- **Expected job IDs**: Read the `expected_jobs` field from `/workspace/_context/grouping-context.json`
-
-Subcommand reference:
-
-- **Create a group** — one call per root cause, with all its jobs and error messages:
-  ```bash
-  python3 /workspace/_tools/pipeline-grouping/scripts/grouper.py add-group \
-    --state /workspace/grouping.work.json \
-    --expected-jobs <expected_jobs> \
-    --summary "<1-2 sentence description of the shared root cause>" \
-    --jobs <id1>,<id2>,<id3>,... \
-    --error "<first unique error message>" \
-    --error "<second unique error message>"
-  ```
-  Include `--expected-jobs` on the first call to enable job ID validation. Subsequent `add-group` calls can omit it.
-
-- **Add a straggler job** — for corrections after initial grouping:
-  ```bash
-  python3 /workspace/_tools/pipeline-grouping/scripts/grouper.py add-job \
-    --state /workspace/grouping.work.json --group <key> --job <id> --error "<msg>"
-  ```
-
-- **Check progress** — view groups and unassigned jobs:
-  ```bash
-  python3 /workspace/_tools/pipeline-grouping/scripts/grouper.py status --state /workspace/grouping.work.json
-  ```
-
-- **Finalize** — validate completeness and produce output:
-  ```bash
-  python3 /workspace/_tools/pipeline-grouping/scripts/grouper.py finalize \
-    --state /workspace/grouping.work.json \
-    --expected-jobs <expected_jobs> \
-    --output /workspace/grouping.json
-  ```
-
-All subcommands exit 0 on success. On failure, read the error message from stderr — it identifies the specific problem (duplicate job, unknown ID, empty summary). Fix the input and retry the call.
-
 ### Instructions
 
 1. Read ALL `errors.txt` files listed in the job manifest. Build a complete picture of the error landscape before making any grouping decisions.
@@ -96,16 +54,30 @@ All subcommands exit 0 on success. On failure, read the error message from stder
    - Different manifestations of the same underlying cause (e.g., `ModuleNotFoundError: No module named 'jsonschema'` in some jobs and `ERROR: Failed to upload python artifacts` in others) = one group
    - Unrelated errors in the same collection = separate groups
 
-3. For each root cause, call `add-group` with:
-   - `--summary`: Human-readable description of the shared root cause (1-2 sentences)
-   - `--jobs`: Complete list of ALL job IDs sharing this root cause (comma-separated)
-   - `--error`: Each unique error message observed in the group (repeat the flag for each distinct message)
+3. Write `/workspace/grouping.json` with this exact schema:
+   ```json
+   {
+     "groups": [
+       {
+         "id": "01-slug-describing-the-root-cause",
+         "summary": "1-2 sentence description of the shared root cause",
+         "job_ids": ["id1", "id2", "id3"],
+         "error_messages": ["first unique error message", "second unique error message"]
+       }
+     ]
+   }
+   ```
 
-4. Call `finalize` to validate completeness and write `grouping.json`.
+   Rules:
+   - **`id`**: Sequential two-digit prefix + slugified summary (e.g., `01-numpy-constraint-conflict`). Lowercase, hyphens only, max 60 characters.
+   - **`job_ids`**: Every job ID from `expected_jobs` must appear in exactly one group. No duplicates, no omissions.
+   - **`error_messages`**: Unique error messages observed across the group's jobs. Include the most distinctive error lines, not every line of a traceback.
+   - Sort groups by the smallest numeric job ID in each group.
+   - Sort `job_ids` numerically within each group.
 
-5. If `finalize` reports unassigned jobs, review its error output — it lists the unassigned job IDs and existing group summaries. Assign the missing jobs using `add-job` or `add-group`, then call `finalize` again.
+4. **Validate completeness** before writing: compare your groups' job IDs against the `expected_jobs` field. Every expected job must be assigned to exactly one group. If any are missing, assign them before writing the file.
 
-6. After finalizing, review the recent Jira tickets (if any). For each group, check whether an existing ticket describes the same root cause error. If any matches are found, write `/workspace/dedup-results.json` with the following format:
+5. After writing `grouping.json`, review the recent Jira tickets (if any). For each group, check whether an existing ticket describes the same root cause error. If any matches are found, write `/workspace/dedup-results.json` with the following format:
    ```json
    {
      "results": [

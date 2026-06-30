@@ -64,12 +64,6 @@ This plugin is the inner layer of the pipeline failure analysis system — the s
 | `pipeline-grouping` | Groups failed pipeline jobs by error similarity using log analysis and Jira ticket deduplication |
 | `pipeline-rca` | Root cause analysis on a single error group, producing structured findings with error overview, diagnosis, and resolution guidance |
 
-### Scripts
-
-| Script | Description |
-|--------|-------------|
-| `grouper.py` | CLI-driven group builder for incremental construction and finalization of `grouping.json` |
-
 ## License
 
 Apache-2.0
