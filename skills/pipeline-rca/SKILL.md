@@ -221,6 +221,8 @@ Write each section file knowing where it appears in the final report. The **Erro
    - `actions`: Pipeline actions that failed (e.g., `["build-wheels"]`). When a group spans multiple actions, include all unique values.
    - `target_repo`: Full GitLab URL of the repository where the fix should be applied. Construct from the **Known Repositories** table above. Omit for infrastructure failures or when the fix location is unclear.
    - `target_repo_reason`: 1-2 sentence justification for why `target_repo` was chosen — which files need changing and why they live in that repository. Required when `target_repo` is set.
+   - `target_branch`: The branch the fix should target. Set this when `pipeline.ref` from `/workspace/_context/rca-context.json` is not a default branch (main/master) -- the fix should go to the same branch the pipeline ran on. Omit when the pipeline ran on the default branch or when no code fix exists.
+   - `target_branch_reason`: 1-2 sentence justification for why `target_branch` was chosen -- for example, the pipeline ran on that branch, or the bug only affects that release. Required when `target_branch` is set.
 
    **Confidence rubric:**
    | Value | Criteria |
@@ -244,6 +246,8 @@ Write each section file knowing where it appears in the final report. The **Erro
       "cascade": false,
       "target_repo": "https://gitlab.com/<project-path>",
       "target_repo_reason": "<Why this repo — which files need changing and why they live there>",
+      "target_branch": "<branch-name>",
+      "target_branch_reason": "<Why this branch — e.g. the pipeline ran on release-3.5>",
       "group_consistency": "consistent",
       "feedback_status": "included",
       "references": [

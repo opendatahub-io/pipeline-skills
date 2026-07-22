@@ -105,6 +105,14 @@
       "type": "string",
       "description": "1-2 sentence justification for why target_repo was chosen (e.g. which files need changing and why they live in that repo)."
     },
+    "target_branch": {
+      "type": "string",
+      "description": "Branch the fix should target (e.g. 'release-3.5'). Omit when the fix should target the default branch (main/master) or when no code fix exists."
+    },
+    "target_branch_reason": {
+      "type": "string",
+      "description": "1-2 sentence justification for why target_branch was chosen (e.g. the pipeline ran on that branch, or the bug only affects that release)."
+    },
     "resources_used": {
       "type": "object",
       "description": "Workspace resources consulted during analysis.",
