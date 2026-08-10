@@ -110,6 +110,23 @@
       "type": "string",
       "description": "1-2 sentence justification for why target_repo was chosen (e.g. which files need changing and why they live in that repo)."
     },
+    "domain_enrichment": {
+      "type": "object",
+      "description": "Domain-specific metadata added by a domain skill hook. Present only when the domain_skill field was set in rca-context.json and the hook produced valid enrichment.",
+      "required": ["domain_skill", "metadata"],
+      "additionalProperties": false,
+      "properties": {
+        "domain_skill": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the domain skill that produced this enrichment."
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Domain-specific classification data. Schema is defined by the domain skill, not by pipeline-rca."
+        }
+      }
+    },
     "resources_used": {
       "type": "object",
       "description": "Workspace resources consulted during analysis.",
