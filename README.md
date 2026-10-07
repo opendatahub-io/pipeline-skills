@@ -55,7 +55,25 @@ Analysis runs in two stages:
 
 The orchestrator assembles these outputs into per-group reports and routes them to Jira and Slack.
 
-This plugin is the inner layer of the pipeline failure analysis system — the skills that run inside the Claude Code container. The outer layer (Python orchestration, GitLab CI, report assembly, Jira/Slack notifications) lives in [pipeline-failure-analyzer](https://github.com/opendatahub-io/pipeline-failure-analyzer) and [agentic-ci](https://github.com/opendatahub-io/agentic-ci) (generic CI framework).
+### Structured wheel failure reports
+
+`wheel-failure-triage` provides the Python CLI used before PFA: collect original
+partial-failure reports from bootstrap jobs, including successful jobs in child
+pipelines, retain every failure's `source_pipeline_url`, and generate one audit
+child job. That job fails for a nonempty report and retains the complete JSON.
+The parent waits for the audit to finish before starting PFA with `BOT_PAT`.
+
+These helpers run deterministically in CI. See
+[the skill](skills/wheel-failure-triage/SKILL.md) for the commands, dependencies,
+and report contract. The source pipeline URLs let downstream consumers attribute
+each error to its originating build when producing analysis and tickets.
+
+The analysis skills run inside the agent container. Report assembly and
+Jira/Slack notifications live in
+[pipeline-failure-analyzer](https://github.com/opendatahub-io/pipeline-failure-analyzer)
+and [agentic-ci](https://github.com/opendatahub-io/agentic-ci). The
+`wheel-failure-triage` helpers also run directly in CI to collect build evidence
+and create the audit report that those analysis skills consume.
 
 ### Skills
 
@@ -63,12 +81,14 @@ This plugin is the inner layer of the pipeline failure analysis system — the s
 |-------|-------------|
 | `pipeline-grouping` | Groups failed pipeline jobs by error similarity using log analysis and Jira ticket deduplication |
 | `pipeline-rca` | Root cause analysis on a single error group, producing structured findings with error overview, diagnosis, and resolution guidance |
+| `wheel-failure-triage` | Collects structured wheel failures across build pipelines and hands one complete audit report to PFA |
 
 ### Scripts
 
 | Script | Description |
 |--------|-------------|
 | `grouper.py` | CLI-driven group builder for incremental construction and finalization of `grouping.json` |
+| `wheel_failure_triage.py` | CLI for collection, the single audit job, and the PFA handoff |
 
 ## License
 

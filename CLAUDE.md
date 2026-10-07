@@ -8,6 +8,7 @@ Agentic-ci skills for AIPCC pipeline failure analysis. Consumed as a Claude Code
 |-------|---------|
 | `pipeline-grouping` | Group failed pipeline jobs by error similarity |
 | `pipeline-rca` | Root cause analysis for a single error group |
+| `wheel-failure-triage` | Collect structured wheel failures and hand one audit report to PFA |
 
 ## Workspace contract
 
@@ -18,6 +19,10 @@ Skills expect the orchestrator to prepare a workspace at `/workspace/` with:
 - `pipeline-context.json` — Pipeline metadata
 
 See each skill's SKILL.md for the specific context files it reads.
+
+`wheel-failure-triage` also exposes deterministic Python helpers for CI. Its
+collector runs in the source checkout with GitLab CI environment variables;
+the audit runs from the collector's artifacts. It does not need an LLM.
 
 ## Conventions
 
