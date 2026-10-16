@@ -513,9 +513,10 @@ def collect(
                                 source_pipeline_url,
                             )
                         )
-            # Retain actual failed/canceled jobs, including failures after a
-            # bootstrap report was written.
-            if job["status"] in {"failed", "canceled"}:
+            # Retain actual failed jobs, including failures after a bootstrap
+            # report was written. Canceled jobs are not failures: on main they
+            # are usually auto-canceled because a newer pipeline replaced this one.
+            if job["status"] == "failed":
                 entry = record(
                     job,
                     "job",
