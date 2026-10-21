@@ -42,6 +42,8 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/wheel_failure_triage.py" notify --work-dir 
 
 The CLI starts the PFA pipeline using `BOT_PAT` and forwards the selected pipeline URL. Outside scheduled pipelines, a clean audit (no failed jobs and no partial failures) starts no PFA pipeline, so callers can run the flow on every post-merge pipeline and analyze only those with failures. Jira defaults to the `RHAI` project. Notifications are enabled by default: PFA uses its own `JIRA_API_TOKEN` and configured Slack webhook. A nonempty caller `SLACK_WEBHOOK_URL` overrides that destination; an unset or empty value leaves PFA's default intact. Only explicit `PFA_DISABLE_NOTIFICATIONS=true` suppresses Jira and Slack by sending empty downstream credentials.
 
+`SUMO_CONFIG` enables the Sumo Logic button in Slack. It defaults to index `rh_ess` and source `rh_aipr-001_fondue`. Set a YAML `sumo` mapping with `index` and `source` to override these values, or set an empty `SUMO_CONFIG` to omit the button. The CLI forwards this configuration to PFA; `DATADOG_CONFIG` is no longer used.
+
 ## Runtime requirements
 
 `prepare` and `notify` require Python packages `requests` and `PyYAML`. Both require `CI_API_V4_URL`, `CI_PROJECT_ID`, and `BOT_PAT`. `prepare` also requires `CI_PIPELINE_ID` and `CI_PIPELINE_URL`; `CI_JOB_ID` is used to identify a collection error. `notify` uses `CI_COMMIT_REF_NAME` and the CI pipeline metadata. Jira and Slack values are optional and may be supplied through `JIRA_PROJECT`, `JIRA_LABELS`, `JIRA_COMPONENTS`, `JIRA_SUMMARY_PREFIX` and `SLACK_WEBHOOK_URL`. Configure the Jira API token in the PFA project, not the caller.

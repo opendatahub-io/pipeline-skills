@@ -768,8 +768,8 @@ def notify(client: GitLab, environ: dict[str, str], work_dir: Path) -> None:
             "JIRA_SUMMARY_PREFIX", f"[{prefix}] - {environ['CI_COMMIT_REF_NAME']}"
         ),
         "NOTIFY_ON_SUCCESS": "true" if clean else "false",
-        "DATADOG_CONFIG": environ.get(
-            "DATADOG_CONFIG", "datadog:\n  tags:\n    service: aipcc-fondue\n"
+        "SUMO_CONFIG": environ.get(
+            "SUMO_CONFIG", "sumo:\n  index: rh_ess\n  source: rh_aipr-001_fondue\n"
         ),
     }
     webhook: str = environ.get("SLACK_WEBHOOK_URL", "").strip()
