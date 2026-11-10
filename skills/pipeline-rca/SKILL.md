@@ -230,6 +230,7 @@ Write each section file knowing where it appears in the final report. The **Erro
    - `transient`: Set to `true` when the failure is transient -- likely resolvable by retrying the job without code or configuration changes (network errors, registry flakes, infrastructure issues). Defaults to `false`. When `true`, the orchestrator may auto-retry the failed jobs instead of filing a Jira ticket.
    - `target_repo`: Full GitLab URL of the repository where the fix should be applied. Construct from the **Known Repositories** table above. Omit for infrastructure failures or when the fix location is unclear.
    - `target_repo_reason`: 1-2 sentence justification for why `target_repo` was chosen — which files need changing and why they live in that repository. Required when `target_repo` is set.
+   - `target_branch`: Verified repair branch in `target_repo`. AutoQA findings need both a supported repair repository and branch before PFA can make the ticket Autofix eligible. Verify the branch in the repair repository; do not copy the source pipeline ref or assume `main`. Omit it when unknown, leaving the finding in manual triage.
 
    **Confidence rubric:**
    | Value | Criteria |

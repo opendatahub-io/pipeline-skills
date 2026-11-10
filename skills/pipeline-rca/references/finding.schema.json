@@ -110,6 +110,12 @@
       "type": "string",
       "description": "1-2 sentence justification for why target_repo was chosen (e.g. which files need changing and why they live in that repo)."
     },
+    "target_branch": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Verified repair branch in target_repo. Include for AutoQA findings only when repository evidence establishes the repair branch; do not infer it from the source pipeline ref. Omit when unknown so the finding remains in manual triage."
+    },
     "resources_used": {
       "type": "object",
       "description": "Workspace resources consulted during analysis.",
