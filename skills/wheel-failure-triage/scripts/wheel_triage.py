@@ -11,6 +11,8 @@ from urllib.parse import quote, urlsplit, urlunsplit
 
 import requests
 import yaml
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 PFA_PROJECT: str = "redhat/rhel-ai/agentic-ci/pipeline-failure-analyzer"
 FAILURES_PATH: str = "mnt/work-dir/partial-failures.json"
@@ -25,6 +27,17 @@ LAUNCH_JOB: str = "launch-wheel-audit"
 TRIAGE_JOB: str = "collect-wheel-failures"
 AUDIT_FLOW_JOBS: frozenset[str] = frozenset(
     {AUDIT_JOB, LAUNCH_JOB, TRIAGE_JOB, "analyze-failures"}
+)
+# A transient GitLab timeout or 5xx must not become a permanent evidence
+# failure. urllib3 retries read errors and 5xx responses only for idempotent
+# methods, but it retries other errors such as SSL errors for any method.
+# other=0 disables that, so the PFA trigger POST is never sent twice.
+RETRY: Retry = Retry(
+    total=3,
+    other=0,
+    backoff_factor=2,
+    status_forcelist=(429, 500, 502, 503, 504),
+    raise_on_status=False,
 )
 
 
@@ -56,6 +69,9 @@ class GitLab:
         self.project_id: str = environ["CI_PROJECT_ID"]
         self.session: requests.Session = GitLabSession()
         self.session.headers["PRIVATE-TOKEN"] = environ["BOT_PAT"]
+        adapter: HTTPAdapter = HTTPAdapter(max_retries=RETRY)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
 
     def get(
         self, path: str, *, project_id: int | str | None = None, **params: Any
